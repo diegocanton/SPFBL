@@ -46,6 +46,7 @@ public class Handle implements Serializable, Comparable<Handle> {
     private Date created; // Data de criação do registro.
     private Date changed = null; // Data de alteração do registro.
     private String provider = null;
+    private String country = null;
     
     /**
      * Formatação padrão dos campos de data do WHOIS.
@@ -83,13 +84,7 @@ public class Handle implements Serializable, Comparable<Handle> {
      * @throws ProcessException se houver falha no processamento.
      */
     public void setEmail(String e_mail) throws ProcessException {
-        if (e_mail == null) {
-            if (this.e_mail != null) {
-                this.e_mail = e_mail;
-                // Atualiza flag de atualização.
-                CHANGED = true;
-            }
-        } else if (!e_mail.equals(this.e_mail)) {
+        if (e_mail != null && !e_mail.equals(this.e_mail)) {
             this.e_mail = e_mail;
             // Atualiza flag de atualização.
             CHANGED = true;
@@ -116,6 +111,7 @@ public class Handle implements Serializable, Comparable<Handle> {
                 }
             } catch (ParseException ex) {
                 this.created = null;
+                Server.logTrace(created);
                 Server.logError(ex);
             }
         }
@@ -144,8 +140,8 @@ public class Handle implements Serializable, Comparable<Handle> {
                     CHANGED = true;
                 }
             } catch (ParseException ex) {
+                Server.logTrace(changed);
                 Server.logError(ex);
-                throw new ProcessException("ERROR: PARSING CHANGED " + changed);
             }
         }
     }
@@ -164,6 +160,25 @@ public class Handle implements Serializable, Comparable<Handle> {
             }
         } else if (!provider.equals(this.provider)) {
             this.provider = provider;
+            // Atualiza flag de atualização.
+            CHANGED = true;
+        }
+    }
+    
+    /**
+     * Altera o pais da pessoa.
+     * @param country o novo pais da pessoa.
+     * @throws ProcessException se houver falha no processamento.
+     */
+    public void setCountry(String country) throws ProcessException {
+        if (country == null) {
+            if (this.country != null) {
+                this.country = country;
+                // Atualiza flag de atualização.
+                CHANGED = true;
+            }
+        } else if (!country.equals(this.country)) {
+            this.country = country;
             // Atualiza flag de atualização.
             CHANGED = true;
         }
@@ -209,6 +224,8 @@ public class Handle implements Serializable, Comparable<Handle> {
             }
         } else if (key.equals("provider")) {
             return provider;
+        } else if (key.equals("country")) {
+            return country;
         } else {
             return null;
         }
@@ -253,7 +270,7 @@ public class Handle implements Serializable, Comparable<Handle> {
     public static void store() {
         if (CHANGED) {
             try {
-                Server.logTrace("storing handle.map");
+//                Server.logTrace("storing handle.map");
                 long time = System.currentTimeMillis();
                 HashMap<String,Handle> map = getMap();
                 File file = new File("./data/handle.map");

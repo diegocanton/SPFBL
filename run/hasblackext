@@ -1,0 +1,66 @@
+#!/bin/bash
+#
+# Executable verification inside compressed files.
+#
+# SPFBL is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# SPFBL is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with SPFBL. If not, see <http://www.gnu.org/licenses/>.
+#
+# Projeto SPFBL - Copyright Leandro Carlos Rodrigues - leandro@spfbl.net
+# https://github.com/leonamp/SPFBL
+
+list="com|vbs|vbe|bat|pif|scr|prf|lnk|exe|shs|cpl|hta|jse|wsf|jar|js"
+content=$(file "$1")
+
+if [ $? -ne 0 ]; then
+    echo "0"
+    exit 0
+elif [[ $content =~ "Zip archive data" ]]; then
+    content=$(unzip -Z -1 "$1")
+    for line in $content; do
+        if [[ $line =~ \.html?$ ]]; then
+            # Check HTML redir command.
+            if [ $(unzip -c "$1" $line | egrep -c -i "<meta[^>]+http-equiv *= *\"?refresh\"?[^>]+>") -ne "0" ]; then
+                echo "1"
+                exit 1
+            fi
+        elif [[ $line =~ \.($list)$ ]]; then
+            echo "1"
+            exit 1
+        fi
+    done
+    echo "0"
+    exit 0
+elif [[ $content =~ "RAR archive data" ]]; then
+    content=$(unrar l "$1")
+    for line in $content; do
+        if [[ $line =~ \.($list)$ ]]; then
+            echo "1"
+            exit 1
+        fi
+    done
+    echo "0"
+    exit 0
+elif [[ $content =~ "tar archive" ]]; then
+    content=$(tar -tvf "$1")
+    for line in $content; do
+        if [[ $line =~ \.($list)$ ]]; then
+            echo "1"
+            exit 1
+        fi
+    done
+    echo "0"
+    exit 0
+else
+    echo "0"
+    exit 0
+fi

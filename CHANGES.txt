@@ -1,3 +1,179 @@
+### v2.8.0 ; release 12/11/2017:
+
+NEW) implementação da camada SSL em todas as conexões TCP com o sistema.
+
+NEW) implementação de criptografia simétrica nas conexões P2P.
+
+NEW) implementação do protocolo HTTPS.
+
+NEW) implementação do opt-out para que qualquer usuário pare de receber alertas do sistema.
+
+NEW) implementação da segunda versão do reCAPTHA, pois a primeira versão será descontinuada.
+
+NEW) implementação do protocolo ACME para gerenciamento automático dos certificados digitais.
+
+NEW) implementação do protocolo SYSLOG para centralização dos registros de LOG.
+
+NEW) implementação da consulta URIBL para links bloqueados pelo sistema.
+
+NEW) implementação do carregamento do corpo da mensagem em HTML.
+
+UPDT) atualização da tabela MySQL para registro de consultas com uma versão mais estável.
+
+UPDT) aprimoramento da inteligência na funcionalidade ANALISE.
+
+UPDT) aprimoramento do filtro de consulta do painel de controle.
+
+UPDT) aprimoramento do comportamento do HOLD.
+
+UPDT) carregamento da data no cabeçalho da mensagem.
+
+UPDT) converção de IPv6 (6to4) para o endereço original IPv4.
+
+UPDT) converção de IPv6 (Teredo) para o endereço original IPv4.
+
+FIX) correção do defeito no pooler de conexões MySQL.
+
+FIX) correção do defeito da consulta DNS, quando o servidor DNS responde NXDOMAIN para AAAA quando alguns domínios existentes são consultados.
+
+FIX) pequenas correções nas interpretações do BLOCK.
+
+FIX) pequenas correções nas interpretações do WHITE.
+
+FIX) correção da validação do endereço de e-mail com sinal positivo.
+
+
+### v2.7.6 ; release 30/07/2017:
+
+NEW) implementação da assinatura DKIM para envio direto de e-mail pelo SPFBL.
+
+NEW) implementação do bloqueio e whitelist automáticos por indução do costume de recebimento de cada usuário.
+
+NEW) implementação do opt-out para que possam solicitar que o sistema pare e enviar mensagens de interatividade.
+
+UPDT) aproveitamento dos registros atrasados, como o GREYLIST e o LISTED.
+
+UPDT) atualização da tabela MySQL para registro de consultas com uma versão estável.
+
+UPDT) implementação de multiplas conexões simultâneas no HTTP do sistema.
+
+FIX) correção da query MySQL quando o usuário determina um e-mail no campo de pesquisa.
+
+FIX) correção do remetente MAILER-DEAMON nas funções de bloqueio e liberação.
+
+FIX) correção da função HEADER para resultados HOLD e FLAG.
+
+
+### v2.7.5 ; release 09/07/2017:
+
+FIX) correção do modelo de tabela das consultas no MySQL.
+
+FIX) correção referente a permissões de acesso na estrututa de dados de clientes.
+
+UPDT) criação de um pooler de conexões MySQL para reciclagem de conexões.
+
+UPDT) remoção de registros de consulta com resultado BLOCK na memória se gravada em banco de dados.
+
+UPDT) busca de registros de consulta em banco de dados quando estiverem fora da memória.
+
+UPDT) implementação da resposta REJECT para o comando HEADER, quando houver rejeição pelo conteúdo.
+
+UPDT) envio da chave de desbloqueio DNSBL em segundo plano, para não congestinoar o serviço HTTP.
+
+
+### v2.7.4 ; release 02/07/2017:
+
+NEW) implementação da configuração de idioma por usuário.
+
+UPDT) aprimoramento da gravação de registros de consulta no MySQL.
+
+UPDT) aprimoramento das mensagens de alerta e das páginas HTML.
+
+UPDT) aprimoramento do estilo padrão das páginas HTML.
+
+FIX) descondiderar bloqueio manual para a conta abuse e admin.
+
+FIX) correção da interpretação de identificadores nas consultas SPFBL para remetentes freemail.
+
+
+### v2.7.3 ; release 25/06/2017:
+
+NEW) implementação da gravação das consultas no MySQL, em carater experimental.
+
+NEW) nova biblioteca do MySQL connector adicionada para conexão do banco de dados.
+
+NEW) implementação de estilo HTML para apresentação personalizada dos e-mails interativos.
+
+FIX) correção na consulta do owner-id do WHOIS do registro.br.
+
+UPDT) aprimoramento da usabilidade páginas de interação por HTTP.
+
+
+### v2.7.2 ; release 21/06/2017:
+
+NEW) implementação de estilo HTML para apresentação personalizada das páginas interativas.
+
+NEW) implementação de análise de agrupamento, para pontuar grupos de domínios ou grupos de IPs.
+
+UPDT) aprimoramento da estrutura BLOCK com objetivo de agrupamento automático, para economizar memória.
+
+FIX) correção dos métodos de manipulação da tabela BLOCK.
+
+FIX) correção do script hasblackext, que verifica executáveis dentro de comprimidos.
+
+
+### v2.7.1 ; release 11/06/2017:
+
+NEW) implementação de verificação de domínios em grace time no registro.br.
+
+UPDT) aprimoramento da estrutura BLOCK com objetivo de limpeza automática.
+
+FIX) correção da manipulação de dados na ferramenta ANALISE.
+
+FIX) correção das constantes de tempo.
+
+
+### v2.7.0 ; release 28/05/2017:
+
+FIX) correção na definição de reputação para remetentes freemail.
+
+FIX) correção na criação do firewall com ip6tables para IPv6.
+
+FIX) correção na estrutura de dados da lista WHITE.
+
+NEW) implementação de padrão de rDNS de IP dinâmico.
+
+NEW) implementação de verificação SLAAC para IPv6.
+
+NEW) implementação das configurações para pacote Debian.
+
+UPDT) aprimoramentos da ferramenta ANALISE.
+
+UPDT) aprimoramentos no serviço de DNSBL.
+
+UPDT) envio de e-mail com URL de liberação ao remetente bloqueado.
+
+UPDT) implementação da última em registros BLOCK, para ser possível limpar registros que não são usados a muito tempo.
+
+
+### v2.6.1 ; release 19/03/2017:
+
+UPDT) retenção de bloqueios via P2P removido por ficar obsoleto.
+
+UPDT) aprimoramentos da ferramenta ANALISE.
+
+NEW) implementação da definição de conta de abuso.
+
+FIX) mensagens de e-mail passarama a ser enviada sem fila por conta de erros na entrega.
+
+FIX) correção no método hairCut dos registros de consulta.
+
+NEW) implementação de mensagens de alerta de renteção.
+
+NEW) implementação de mensagens de alerta de suspeita.
+
+NEW) bloqueio por HREF em partes do corpo em HTML.
+
 ### v2.5.1 ; release 15/01/2017:
 
 FIX) correção no timeout do WHOIS, que causava encavalamento de conexões SPFBL.

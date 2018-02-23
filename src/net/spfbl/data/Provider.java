@@ -22,7 +22,6 @@ import java.io.FileOutputStream;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.TreeSet;
-import net.spfbl.core.Core;
 import net.spfbl.core.ProcessException;
 import net.spfbl.core.Server;
 import net.spfbl.spf.SPF;
@@ -49,7 +48,7 @@ public class Provider {
      */
     private static class SET {
         
-        private static final HashSet<String> SET = new HashSet<String>();
+        private static final HashSet<String> SET = new HashSet<>();
         
         public static synchronized boolean isEmpty() {
             return SET.isEmpty();
@@ -60,7 +59,7 @@ public class Provider {
         }
         
         public static synchronized TreeSet<String> getAll() {
-            TreeSet<String> set = new TreeSet<String>();
+            TreeSet<String> set = new TreeSet<>();
             set.addAll(SET);
             return set;
         }
@@ -83,7 +82,7 @@ public class Provider {
      */
     private static class CIDR {
         
-        private static final HashMap<String,TreeSet<String>> MAP = new HashMap<String,TreeSet<String>>();
+        private static final HashMap<String,TreeSet<String>> MAP = new HashMap<>();
         
         public static synchronized boolean isEmpty() {
             return MAP.isEmpty();
@@ -94,7 +93,7 @@ public class Provider {
         }
         
         public static synchronized TreeSet<String> getAll() {
-            TreeSet<String> set = new TreeSet<String>();
+            TreeSet<String> set = new TreeSet<>();
             for (String client : MAP.keySet()) {
                 for (String cidr : MAP.get(client)) {
                     if (cidr.contains(":")) {
@@ -147,7 +146,7 @@ public class Provider {
             }
             TreeSet<String> set = MAP.get(client);
             if (set == null) {
-                set = new TreeSet<String>();
+                set = new TreeSet<>();
                 MAP.put(client, set);
             }
             String key = Subnet.expandCIDR(cidr);
@@ -304,9 +303,7 @@ public class Provider {
     }
     
     private static String normalizeProvider(String token) throws ProcessException {
-        return SPF.normalizeToken(token, false, false, true, false,
-//                false,
-                false);
+        return SPF.normalizeToken(token, false, false, true, false, false, false);
     }
 
     public static boolean add(String address) throws ProcessException {
@@ -320,7 +317,7 @@ public class Provider {
     }
 
     public static TreeSet<String> dropAll() throws ProcessException {
-        TreeSet<String> blockSet = new TreeSet<String>();
+        TreeSet<String> blockSet = new TreeSet<>();
         for (String token : getAll()) {
             if (dropExact(token)) {
                 blockSet.add(token);
@@ -339,6 +336,20 @@ public class Provider {
         }
     }
     
+    public static boolean contains(String token) {
+        if (token == null) {
+            return false;
+        } else if (Subnet.isValidIP(token)) {
+            String ip = Subnet.normalizeIP(token);
+            return containsCIDR(ip);
+        } else if (Domain.isHostname(token)) {
+            String host = Domain.normalizeHostname(token, true);
+            return containsDomain(host);
+        } else {
+            return false;
+        }
+    }
+    
     public static boolean containsCIDR(String ip) {
         return CIDR.get(null, ip) != null;
     }
@@ -346,7 +357,7 @@ public class Provider {
     public static boolean containsMX(String sender) {
         if (sender == null) {
             return false;
-        } else if (Domain.isEmail(sender)) {
+        } else if (Domain.isMailFrom(sender)) {
             int index = sender.indexOf('@');
             return SET.contains(sender.substring(index));
         } else {
@@ -393,16 +404,12 @@ public class Provider {
     public static void store() {
         if (CHANGED) {
             try {
-                Server.logTrace("storing provider.set");
                 long time = System.currentTimeMillis();
                 File file = new File("./data/provider.set");
                 TreeSet<String> set = getAll();
-                FileOutputStream outputStream = new FileOutputStream(file);
-                try {
+                try (FileOutputStream outputStream = new FileOutputStream(file)) {
                     SerializationUtils.serialize(set, outputStream);
                     CHANGED = false;
-                } finally {
-                    outputStream.close();
                 }
                 Server.logStore(time, file);
             } catch (Exception ex) {
@@ -417,11 +424,8 @@ public class Provider {
         if (file.exists()) {
             try {
                 TreeSet<String> set;
-                FileInputStream fileInputStream = new FileInputStream(file);
-                try {
+                try (FileInputStream fileInputStream = new FileInputStream(file)) {
                     set = SerializationUtils.deserialize(fileInputStream);
-                } finally {
-                    fileInputStream.close();
                 }
                 for (String token : set) {
                     try {

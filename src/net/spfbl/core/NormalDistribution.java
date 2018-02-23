@@ -47,6 +47,30 @@ public class NormalDistribution implements Serializable {
         xi2Sum = 0.0f;
     }
     
+    private NormalDistribution(float xiSum, float xi2Sum) {
+        this.xiSum = xiSum;
+        this.xi2Sum = xi2Sum;
+    }
+    
+    public static NormalDistribution newDistribution(
+            String xiSum,
+            String xi2Sum
+    ) {
+        if (xiSum == null || xiSum.length() == 0) {
+            return null;
+        } else if (xi2Sum == null || xi2Sum.length() == 0) {
+            return null;
+        } else {
+            try {
+                float xiSumLocal = Float.parseFloat(xiSum);
+                float xi2SumLocal = Float.parseFloat(xi2Sum);
+                return new NormalDistribution(xiSumLocal, xi2SumLocal);
+            } catch (NumberFormatException ex) {
+                return null;
+            }
+        }
+    }
+    
     public NormalDistribution replicate() {
         NormalDistribution clone = new NormalDistribution();
         clone.xiSum = this.xiSum;
@@ -71,6 +95,13 @@ public class NormalDistribution implements Serializable {
         // Adiciona o novo elemento na população.
         xiSum += value;
         xi2Sum += value * value;
+    }
+    
+    public synchronized Float[] getXiSum() {
+        Float[] xiResult = new Float[2];
+        xiResult[0] = xiSum;
+        xiResult[1] = xi2Sum;
+        return xiResult;
     }
     
     public float getAverage() {

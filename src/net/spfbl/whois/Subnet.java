@@ -65,7 +65,7 @@ public abstract class Subnet implements Serializable, Comparable<Subnet> {
     /**
      * Lista dos servidores de nome do bloco.
      */
-    private final ArrayList<String> nameServerList = new ArrayList<String>();
+    private final ArrayList<String> nameServerList = new ArrayList<>();
     
     // Protected temporário até final da transição.
     protected String server = null; // Servidor onde a informação do bloco pode ser encontrada.
@@ -82,11 +82,6 @@ public abstract class Subnet implements Serializable, Comparable<Subnet> {
     public static void setRefreshTime(int time) {
         REFRESH_TIME = time;
     }
-    
-    /**
-     * Formatação padrão dos campos de data do WHOIS.
-     */
-    private static final SimpleDateFormat DATE_FORMATTER = new SimpleDateFormat("yyyyMMdd");
     
     protected Subnet(String result) throws ProcessException {
         // Associação da chave primária final.
@@ -106,7 +101,9 @@ public abstract class Subnet implements Serializable, Comparable<Subnet> {
     public abstract String getWhoisServer() throws ProcessException;
     
     public static String getFirstIP(String cidr) {
-        if (SubnetIPv4.isValidCIDRv4(cidr)) {
+        if (cidr == null) {
+            return null;
+        } else if (SubnetIPv4.isValidCIDRv4(cidr)) {
             return SubnetIPv4.getFirstIPv4(cidr);
         } else if (SubnetIPv6.isValidCIDRv6(cidr)) {
             return SubnetIPv6.getFirstIPv6(cidr);
@@ -116,7 +113,9 @@ public abstract class Subnet implements Serializable, Comparable<Subnet> {
     }
     
     public static String getLastIP(String cidr) {
-        if (SubnetIPv4.isValidCIDRv4(cidr)) {
+        if (cidr == null) {
+            return null;
+        } else if (SubnetIPv4.isValidCIDRv4(cidr)) {
             return SubnetIPv4.getLastIPv4(cidr);
         } else if (SubnetIPv6.isValidCIDRv6(cidr)) {
             return SubnetIPv6.getLastIPv6(cidr);
@@ -125,8 +124,22 @@ public abstract class Subnet implements Serializable, Comparable<Subnet> {
         }
     }
     
+    public static String getPreviousIP(String ip) {
+        if (ip == null) {
+            return null;
+        } else if (SubnetIPv4.isValidIPv4(ip)) {
+            return SubnetIPv4.getPreviousIPv4(ip);
+        } else if (SubnetIPv6.isValidIPv6(ip)) {
+            return SubnetIPv6.getPreviousIPv6(ip);
+        } else {
+            return null;
+        }
+    }
+    
     public static String getNextIP(String ip) {
-        if (SubnetIPv4.isValidIPv4(ip)) {
+        if (ip == null) {
+            return null;
+        } else if (SubnetIPv4.isValidIPv4(ip)) {
             return SubnetIPv4.getNextIPv4(ip);
         } else if (SubnetIPv6.isValidIPv6(ip)) {
             return SubnetIPv6.getNextIPv6(ip);
@@ -135,14 +148,14 @@ public abstract class Subnet implements Serializable, Comparable<Subnet> {
         }
     }
     
-    public static byte getMask(String cidr) {
+    public static short getMask(String cidr) {
         if (cidr == null) {
             return 0;
         } else if (cidr.contains("/")) {
             try {
                 int index = cidr.lastIndexOf('/') + 1;
                 String number = cidr.substring(index);
-                return Byte.parseByte(number);
+                return Short.parseShort(number);
             } catch (NumberFormatException ex) {
                 return 0;
             }
@@ -180,7 +193,9 @@ public abstract class Subnet implements Serializable, Comparable<Subnet> {
     }
     
     public static String expandIP(String ip) {
-        if (SubnetIPv4.isValidIPv4(ip)) {
+        if (ip == null) {
+            return null;
+        } else if (SubnetIPv4.isValidIPv4(ip)) {
             return SubnetIPv4.expandIPv4(ip);
         } else if (SubnetIPv6.isValidIPv6(ip)) {
             return SubnetIPv6.expandIPv6(ip);
@@ -190,7 +205,9 @@ public abstract class Subnet implements Serializable, Comparable<Subnet> {
     }
     
     public static String expandCIDR(String cidr) {
-        if (SubnetIPv4.isValidCIDRv4(cidr)) {
+        if (cidr == null) {
+            return null;
+        } else if (SubnetIPv4.isValidCIDRv4(cidr)) {
             return SubnetIPv4.expandCIDRv4(cidr);
         } else if (SubnetIPv6.isValidCIDRv6(cidr)) {
             return SubnetIPv6.expandCIDRv6(cidr);
@@ -198,6 +215,8 @@ public abstract class Subnet implements Serializable, Comparable<Subnet> {
             return cidr;
         }
     }
+    
+    public abstract Subnet drop();
     
     /**
      * Atualiza os campos do registro com resultado do WHOIS.
@@ -219,11 +238,11 @@ public abstract class Subnet implements Serializable, Comparable<Subnet> {
             String inetrevNew = null;
             Date createdNew = null;
             Date changedNew = null;
-            ArrayList<String> nameServerListNew = new ArrayList<String>();
+            ArrayList<String> nameServerListNew = new ArrayList<>();
             boolean reducedNew = false;
             String inetnumResult = null;
-            BufferedReader reader = new BufferedReader(new StringReader(result));
-            try {
+            SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyyMMdd");
+            try (BufferedReader reader = new BufferedReader(new StringReader(result))) {
                 String line;
                 while ((line = reader.readLine()) != null) {
                     line = line.trim();
@@ -281,35 +300,55 @@ public abstract class Subnet implements Serializable, Comparable<Subnet> {
                             index = line.indexOf(' ') - 1;
                             valor = valor.substring(index);
                         }
-                        createdNew = DATE_FORMATTER.parse(valor);
+                        if (valor.length() > 7) {
+                            valor = valor.substring(0, 8);
+                            createdNew = dateFormatter.parse(valor);
+                        }
                     } else if (line.startsWith("changed:")) {
                         int index = line.indexOf(':') + 1;
-                        changedNew = DATE_FORMATTER.parse(line.substring(index).trim());
-                    } else if (line.startsWith("nic-hdl-br:")) {
-                        int index = line.indexOf(':') + 1;
-                        String nic_hdl_br = line.substring(index).trim();
-                        line = reader.readLine().trim();
-                        index = line.indexOf(':') + 1;
-                        String person = line.substring(index).trim();
-                        line = reader.readLine().trim();
-                        index = line.indexOf(':') + 1;
-                        String e_mail;
-                        if (reducedNew) {
-                            e_mail = null;
-                        } else {
-                            e_mail = line.substring(index).trim();
-                            line = reader.readLine().trim();
-                            index = line.indexOf(':') + 1;
+                        String valor = line.substring(index).trim();
+                        if (valor.length() > 7) {
+                            valor = valor.substring(0, 8);
+                            changedNew = dateFormatter.parse(valor);
                         }
-                        String created2 = line.substring(index).trim();
-                        line = reader.readLine().trim();
-                        index = line.indexOf(':') + 1;
-                        String changed2 = line.substring(index).trim();
-                        Handle handle = Handle.getHandle(nic_hdl_br);
-                        handle.setPerson(person);
-                        handle.setEmail(e_mail);
-                        handle.setCreated(created2);
-                        handle.setChanged(changed2);
+                    } else if (line.startsWith("nic-hdl-br:")) {
+                        try {
+                            String person = null;
+                            String e_mail = null;
+                            String created2 = null;
+                            String changed2 = null;
+                            String provider2 = null;
+                            String country2 = null;
+                            int index = line.indexOf(':') + 1;
+                            String nic_hdl_br = line.substring(index).trim();
+                            while ((line = reader.readLine().trim()).length() > 0) {
+                                index = line.indexOf(':') + 1;
+                                if (line.startsWith("person:")) {
+                                    person = line.substring(index).trim();
+                                } else if (line.startsWith("e-mail:")) {
+                                    e_mail = line.substring(index).trim();
+                                } else if (line.startsWith("created:")) {
+                                    created2 = line.substring(index).trim();
+                                } else if (line.startsWith("changed:")) {
+                                    changed2 = line.substring(index).trim();
+                                } else if (line.startsWith("provider:")) {
+                                    provider2 = line.substring(index).trim();
+                                } else if (line.startsWith("country:")) {
+                                    country2 = line.substring(index).trim();
+                                } else {
+                                    Server.logError("Linha não reconhecida: " + line);
+                                }
+                            }
+                            Handle handle = Handle.getHandle(nic_hdl_br);
+                            handle.setPerson(person);
+                            handle.setEmail(e_mail);
+                            handle.setCreated(created2);
+                            handle.setChanged(changed2);
+                            handle.setProvider(provider2);
+                            handle.setCountry(country2);
+                        } catch (ProcessException ex) {
+                            Server.logError(ex);
+                        }
                     } else if (line.startsWith("% Not assigned.")) {
                         throw new ProcessException("ERROR: SUBNET NOT ASSIGNED");
                     } else if (line.startsWith("% Permission denied.")) {
@@ -330,8 +369,6 @@ public abstract class Subnet implements Serializable, Comparable<Subnet> {
                         Server.logError("Linha não reconhecida: " + line);
                     }
                 }
-            } finally {
-                reader.close();
             }
             if (inetnumResult == null) {
                 throw new ProcessException("ERROR: SUBNET NOT FOUND");
@@ -378,7 +415,7 @@ public abstract class Subnet implements Serializable, Comparable<Subnet> {
      * @return verdadeiro se o registro atual expirou.
      */
     public boolean isRegistryExpired() {
-        int expiredTime = (int) (System.currentTimeMillis() - lastRefresh) / Server.DAY_TIME;
+        long expiredTime = (System.currentTimeMillis() - lastRefresh) / Server.DAY_TIME;
         return expiredTime > REFRESH_TIME;
     }
     
@@ -387,7 +424,7 @@ public abstract class Subnet implements Serializable, Comparable<Subnet> {
      * @return verdadeiro se o registro atual expirou três dia.
      */
     public boolean isRegistryExpired3() {
-        int expiredTime = (int) (System.currentTimeMillis() - lastRefresh) / Server.DAY_TIME;
+        long expiredTime = (System.currentTimeMillis() - lastRefresh) / Server.DAY_TIME;
         return expiredTime > 3;
     }
     
@@ -579,7 +616,7 @@ public abstract class Subnet implements Serializable, Comparable<Subnet> {
         String result = "";
         String first = Subnet.getFirstIP(cidr);
         String last = Subnet.getLastIP(cidr);
-        byte mask = Subnet.getMask(cidr);
+        short mask = Subnet.getMask(cidr);
         int max = SubnetIPv4.isValidIPv4(first) ? 32 : 64;
         if (mask < max) {
             mask++;
@@ -626,7 +663,7 @@ public abstract class Subnet implements Serializable, Comparable<Subnet> {
     }
     
     private static TreeSet<Subnet> getSubnetSet() {
-        TreeSet<Subnet> subnetSet = new TreeSet<Subnet>();
+        TreeSet<Subnet> subnetSet = new TreeSet<>();
         subnetSet.addAll(SubnetIPv4.getSubnetSet());
         subnetSet.addAll(SubnetIPv6.getSubnetSet());
         return subnetSet;
@@ -663,6 +700,8 @@ public abstract class Subnet implements Serializable, Comparable<Subnet> {
                     // Fazer nada.
                 } else if (ex.isErrorMessage("TOO MANY CONNECTIONS")) {
                     // Fazer nada.
+                } else if (ex.isErrorMessage("SUBNET NOT ASSIGNED")) {
+                    subnetMax.drop();
                 } else {
                     Server.logError(ex);
                 }
@@ -711,13 +750,13 @@ public abstract class Subnet implements Serializable, Comparable<Subnet> {
             if (created == null) {
                 return null;
             } else {
-                return DATE_FORMATTER.format(created);
+                return new SimpleDateFormat("yyyyMMdd").format(created);
             }
         } else if (key.equals("changed")) {
             if (changed == null) {
                 return null;
             } else {
-                return DATE_FORMATTER.format(changed);
+                return new SimpleDateFormat("yyyyMMdd").format(changed);
             }
         } else if (key.equals("nserver")) {
             return nameServerList.toString();
@@ -728,7 +767,12 @@ public abstract class Subnet implements Serializable, Comparable<Subnet> {
         } else if (key.startsWith("owner/")) {
             int index = key.indexOf('/') + 1;
             key = key.substring(index);
-            return getOwner().get(key, updated);
+            Owner ownerLocal = getOwner();
+            if (ownerLocal == null) {
+                return null;
+            } else {
+                return ownerLocal.get(key, updated);
+            }
         } else if (key.startsWith("abuse-c/")) {
             int index = key.indexOf('/') + 1;
             key = key.substring(index);
@@ -759,7 +803,7 @@ public abstract class Subnet implements Serializable, Comparable<Subnet> {
         } else if (key.startsWith("nserver/")) {
             int index = key.indexOf('/') + 1;
             key = key.substring(index);
-            TreeSet<String> resultSet = new TreeSet<String>();
+            TreeSet<String> resultSet = new TreeSet<>();
             for (String nserver : nameServerList) {
                 NameServer nameServer = NameServer.getNameServer(nserver);
                 String result = nameServer.get(key);
